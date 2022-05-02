@@ -1,0 +1,30 @@
+name: 'Setup Espressif tools for Zephyr'
+author: 'XiNGRZ'
+
+runs:
+  using: composite
+  steps:
+    - id: cache-espressif
+      uses: actions/cache@v3
+      with:
+        path: .espressif
+        key: zephyr-espressif-${{ hashFiles('.zephyr/modules/hal/espressif/tools/zephyr_tools.json') }}
+
+    - run: |
+        echo "IDF_TOOLS_PATH=$PWD/.espressif" >> $GITHUB_ENV
+        echo "ESPRESSIF_TOOLCHAIN_PATH=$PWD/.espressif/tools/zephyr" >> $GITHUB_ENV
+        echo "ZEPHYR_TOOLCHAIN_VARIANT=espressif" >> $GITHUB_ENV
+      shell: bash
+
+    - if: steps.cache-espressif.outputs.cache-hit != 'true'
+      run: |
+        echo "::group::Install Espressif tools"
+        west espressif install
+        echo "::endgroup::"
+      shell: bash
+
+    - run: |
+        echo "::group::Update Espressif submodules"
+        west espressif update
+        echo "::endgroup::"
+      shell: bash
